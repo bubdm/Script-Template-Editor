@@ -1,4 +1,3 @@
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,6 +8,8 @@ public class ScriptTemplateEditor : EditorWindow {
 
     private SerializedObject so;
     private SerializedProperty propText;
+
+    private string _loadedTemplatePath;
     
     [MenuItem("Window/General/Script Editor &f")]
     private static void OpenWindow() => GetWindow<ScriptTemplateEditor>();
@@ -18,9 +19,13 @@ public class ScriptTemplateEditor : EditorWindow {
     private GUIStyle headerStyle;
     
     public static readonly string SCRIPT_TEMPLATE_FOLDER_PATH = "Assets/ScriptTemplates";
+
+    private Vector2 _scroll;
     
     private void OnEnable() {
-
+        
+        _loadedTemplatePath = null;
+        
         if (ScriptTemplateFolderExists() == false)
             CreateScriptTemplateFolder();
         
@@ -44,15 +49,29 @@ public class ScriptTemplateEditor : EditorWindow {
         GUILayout.BeginHorizontal(EditorStyles.helpBox);
         textAsset = EditorGUILayout.ObjectField("Current Template", textAsset, typeof(TextAsset), false) as TextAsset;
         GUILayout.EndHorizontal();
-        
-        if (textAsset == null)
+
+        if (textAsset == null) {
+            _loadedTemplatePath = null;
             return;
+        }
+            
         
         if (EditorGUI.EndChangeCheck()) 
-            LoadNewFile(ref textAsset);
+            LoadNewFile(textAsset);
+
+
+        _scroll = EditorGUILayout.BeginScrollView(_scroll);
+        
+        EditorGUI.BeginChangeCheck(); //Check if text has been edited
         
         propText.stringValue = EditorGUILayout.TextArea(propText.stringValue, GUILayout.ExpandHeight(true));
         
+        if (EditorGUI.EndChangeCheck())
+            textChanged = true;
+        
+        EditorGUILayout.EndScrollView();
+
+
         using (new EditorGUILayout.HorizontalScope(GUI.skin.textField)) {
 
             GUI.enabled = textChanged;
@@ -72,9 +91,10 @@ public class ScriptTemplateEditor : EditorWindow {
         
     }
     
-    private void LoadNewFile(ref TextAsset newTextAsset) {
+    private void LoadNewFile(TextAsset newTextAsset) {
         propText.stringValue = newTextAsset.text;
         textAsset = newTextAsset;
+        _loadedTemplatePath = AssetDatabase.GetAssetPath(textAsset);
     }
 
 
@@ -86,9 +106,14 @@ public class ScriptTemplateEditor : EditorWindow {
 
     private void DrawToolBar() {
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-        if (GUILayout.Button("New Template", GUILayout.Width(100))) {
-            ScriptWizard.OpenWindow(position);
-        }
+        if (GUILayout.Button("New Template", GUILayout.Width(110)))
+            ScriptWizard.OpenWindow(position, LoadNewFile);
+
+        GUI.enabled = _loadedTemplatePath != null;
+        if (GUILayout.Button("Delete Template", GUILayout.Width(110)))
+            DeleteLoadedTemplate();
+        GUI.enabled = true;
+        
         EditorGUILayout.EndHorizontal();
     }
 
@@ -98,5 +123,16 @@ public class ScriptTemplateEditor : EditorWindow {
     
     private void CreateScriptTemplateFolder() {
         AssetDatabase.CreateFolder("Assets", "ScriptTemplates");
+    }
+
+    private void DeleteLoadedTemplate() {
+        bool deleteConfirmed = EditorUtility.DisplayDialog("Delete Template", "Are you sure you want to delete " + textAsset.name + "?", "Yes", "No");
+
+        if (deleteConfirmed) {
+            AssetDatabase.DeleteAsset(_loadedTemplatePath);
+            textAsset = null;
+            _loadedTemplatePath = null;
+        }
+        
     }
 }

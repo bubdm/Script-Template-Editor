@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class NewCategoryWindow : EditorWindow {
 
-    public static Action<int, string> OnCreateCategory;
+    private static Action<int, string> OnCreateCategory;
 
     private int contextMenuOrderIndex;
     private string orderIndexString;
@@ -14,13 +14,15 @@ public class NewCategoryWindow : EditorWindow {
 
     private static readonly Rect buttonPosition = new Rect(540, 80, 60, 20);
 
-    public static void OpenWindow(Rect parentWindowPosition) {
+    public static void OpenWindow(Rect parentWindowPosition, Action<int, string> onCreateCategory) {
         NewCategoryWindow window = GetWindow<NewCategoryWindow>("New Category");
         
         window.minSize = new Vector2(600, 100);
         window.maxSize = new Vector2(600, 100);
         
         window.LooselyDockToWindowCorner(parentWindowPosition, ScriptTemplateExtensions.DockingPosition.TopRight);
+
+        OnCreateCategory += onCreateCategory;
     }
 
     private void OnEnable() {
