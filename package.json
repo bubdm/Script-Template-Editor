@@ -1,0 +1,17 @@
+{
+  "name": "com.script.editor",
+  "version": "1.0.0",
+  "description": "A simple editor-GUI for creating and editing script templates",
+  "displayName": "Script Template Editor",
+  "unity": "2021.1",
+  "hideInEditor": true,
+  "keywords": [
+    "script",
+    "template",
+    "editor"
+  ],
+  "author": {
+    "name": "Jonathan Haag",
+    "email": "haagjonathan@live.com"
+  }
+}
